@@ -10,5 +10,7 @@ import com.example.criminal_intent.Crime
 // The database cannot handle dates so we need to create type converters
 @TypeConverters(CrimeTypeConverters::class)
 abstract class CrimeDatabase : RoomDatabase() {
+    // register our DAO. Since CrimeDao is an interface, Room will handle
+    // generating the concrete version of the class
     abstract fun crimeDao() : CrimeDao
 }
