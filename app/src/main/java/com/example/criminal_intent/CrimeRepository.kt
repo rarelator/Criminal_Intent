@@ -23,6 +23,7 @@ class CrimeRepository private constructor(context: Context) {
     companion object{
         private var INSTANCE: CrimeRepository? =  null
 
+        // CrimeRepository needs to be a singleton
         fun initialize(context: Context) {
             if(INSTANCE == null) {
                 INSTANCE = CrimeRepository(context)
