@@ -29,6 +29,9 @@ class CrimeListViewModel : ViewModel() {
 //            Log.d(TAG, "coroutine launched, expect a delay")
 //            crimes += loadCrimes()
 //            Log.d(TAG, "Crime data should be finished")
+            crimeRepository.getCrimes().collect{
+                _crimes.value = it
+            }
         }
 
     }
