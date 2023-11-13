@@ -7,8 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.example.criminal_intent.databinding.FragmentCrimeDetailBinding
+import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.Date
 
@@ -21,24 +26,16 @@ class CrimeDetailFragment : Fragment() {
             "Error: Can we see the view?"
         }
 
-    private lateinit var crime: Crime
+    //private lateinit var crime: Crime
     private val args: CrimeDetailFragmentArgs by navArgs()
+
+    private val crimeDetailViewModel: CrimeDetailViewModel by viewModels {
+        CrimeDetailViewModelFactory(args.crimeId)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // we do NOT call setContentView(R.layout.activity_main)
-        crime = Crime(
-            id = UUID.randomUUID(),
-            title = "Bad Stuff Crime",
-            date = Date(),
-            isSolved = false
-        )
-        Log.d(TAG, "The crime ID: ${args.crimeId}")
     }
 
     override fun onCreateView(
@@ -58,18 +55,44 @@ class CrimeDetailFragment : Fragment() {
 
         binding.apply{// all binding / wireups go here
             crimeTitle.doOnTextChanged{ text, _, _, _ ->
-                crime = crime.copy(title = text.toString())
                 //crime.title = text.toString()
+                crimeDetailViewModel.updateCrime{oldCrime ->
+                    oldCrime.copy(title = text.toString())
+                }
             }
 
-            crimeDate.setText(crime.title)
-            crimeDate.setOnClickListener{ view : View ->
-                crimeDate.setText(crime.isSolved.toString())
+//            crimeDate.setText(crime.title)
+//            crimeDate.setOnClickListener{ view : View ->
+//                crimeDate.setText(crime.isSolved.toString())
+//            }
+            crimeDate.apply{
+                isEnabled = false
             }
 
             crimeSolved.setOnCheckedChangeListener{ _, isChecked ->
-                crime = crime.copy(isSolved= isChecked)
+                crimeDetailViewModel.updateCrime{oldCrime ->
+                    oldCrime.copy(isSolved = isChecked)
+                }
             }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    crimeDetailViewModel.crime.collect{crime ->
+                        // let is a scoping function, going to let you pass in an argument as if it were an object
+                        crime?.let{updateUi(it)}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateUi(crime: Crime) {
+        binding.apply{
+            if(crimeTitle.text.toString() != crime.title){
+                crimeTitle.setText(crime.title)
+            }
+            crimeDate.text = crime.date.toString()
+            crimeSolved.isChecked = crime.isSolved
         }
     }
 }
