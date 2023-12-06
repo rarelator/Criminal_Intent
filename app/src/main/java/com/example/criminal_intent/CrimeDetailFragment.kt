@@ -1,10 +1,15 @@
 package com.example.criminal_intent
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.ContactsContract
+import android.text.format.DateFormat
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -16,11 +21,18 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.criminal_intent.databinding.FragmentCrimeDetailBinding
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Contract
 import java.util.UUID
 import java.util.Date
 
+private const val DATE_FORMAT = "EEE, MMM. dd"
 private const val TAG = "CrimeDetailFragment"
 class CrimeDetailFragment : Fragment() {
+    private val selectSuspect = registerForActivityResult(ActivityResultContracts.PickContact()) {
+        uri: Uri? ->
+            uri?.let{parseContactSelection(it)}
+    }
+
     // to make something null-able (can be null), use ?
     private var _binding : FragmentCrimeDetailBinding? = null
     private val binding : FragmentCrimeDetailBinding
@@ -71,6 +83,10 @@ class CrimeDetailFragment : Fragment() {
 //                isEnabled = false
 //            }
 
+            crimeSuspect.setOnClickListener {
+                selectSuspect.launch(null)
+            }
+
             crimeSolved.setOnCheckedChangeListener{ _, isChecked ->
                 crimeDetailViewModel.updateCrime{oldCrime ->
                     oldCrime.copy(isSolved = isChecked)
@@ -106,6 +122,68 @@ class CrimeDetailFragment : Fragment() {
                 findNavController().navigate(CrimeDetailFragmentDirections.selectDate(crime.date))
             }
             crimeSolved.isChecked = crime.isSolved
+            crimeReport.setOnClickListener {
+                val reportIntent = Intent(Intent.ACTION_SEND).apply{
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, getCrimeReport(crime))
+                    putExtra(
+                        Intent.EXTRA_SUBJECT,
+                        getString(R.string.crime_report_subject)
+                    )
+                }
+                // startActivity(reportIntent)
+                val chooserIntent = Intent.createChooser(
+                    reportIntent,
+                    getString(R.string.crime_report)
+                )
+                startActivity(chooserIntent)
+            }
+
+            crimeSuspect.text = crime.suspect.ifEmpty {
+                getString(R.string.crime_suspect_text)
+            }
+
+        }
+
+    }
+
+    private fun getCrimeReport(crime: Crime): String {
+        val solvedString = if(crime.isSolved) {
+            getString(R.string.crime_report_solved)
+        } else {
+            getString(R.string.crime_report_unsolved)
+        }
+
+        val dateString = DateFormat.format(DATE_FORMAT, crime.date).toString()
+
+        val suspectText = if(crime.suspect.isBlank()) {
+            getString(R.string.crime_report_no_suspect)
+        } else {
+            getString(R.string.crime_report_suspect)
+        }
+
+        return getString(
+            R.string.crime_report,
+            crime.title, dateString, solvedString, suspectText
+        )
+    }
+
+    private fun parseContactSelection(contractUri: Uri) {
+        val queryFields = arrayOf(ContactsContract.Contacts.DISPLAY_NAME)
+        // create a cursor object to navigate through the information in QueryFields
+        // this will point to one row and one column. the row is the contact. the column
+        // is the contact name.
+        val queryCursor = requireActivity().contentResolver.query(contractUri, queryFields, null, null, null)
+
+        //moveToFirst does two things: it moves to the front of the data ans it
+        //returns true if there is data there
+        queryCursor?.use{ cursor ->
+            if (cursor.moveToFirst()) {
+                val suspect = cursor.getString(0)
+                crimeDetailViewModel.updateCrime{ oldCrime ->
+                    oldCrime.copy(suspect = suspect)
+                }
+            }
         }
     }
 }

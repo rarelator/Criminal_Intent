@@ -36,6 +36,10 @@ class CrimeListViewModel : ViewModel() {
 
     }
 
+    suspend fun addCrime(crime: Crime) {
+        crimeRepository.addCrime(crime)
+    }
+
 //    suspend fun loadCrimes() : List<Crime> {
 ////        delay(5000) // <- this causes our app to be blank
 ////        val result = mutableListOf<Crime>()
