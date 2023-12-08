@@ -29,6 +29,12 @@ class CrimeDetailViewModel(crimeId: UUID) : ViewModel() {
         }
     }
 
+    fun deleteCrime(crime: Crime) {
+        viewModelScope.launch {
+            crimeRepository.deleteCrime(crime)
+        }
+    }
+
     //When we navigate away from the fragment, the onClear function is called
     //this is a food time to save our data to our database
     override fun onCleared() {

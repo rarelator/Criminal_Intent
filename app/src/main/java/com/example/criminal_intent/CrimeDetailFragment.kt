@@ -40,7 +40,6 @@ class CrimeDetailFragment : Fragment() {
             "Error: Can we see the view?"
         }
 
-    //private lateinit var crime: Crime
     private val args: CrimeDetailFragmentArgs by navArgs()
 
     private val crimeDetailViewModel: CrimeDetailViewModel by viewModels {
@@ -58,7 +57,6 @@ class CrimeDetailFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // inflates the view for us
-//        return super.onCreateView(inflater, container, savedInstanceState)
         // last parameter is do we want to light up the view
         _binding = FragmentCrimeDetailBinding.inflate(layoutInflater, container, false)
         return binding.root
@@ -74,14 +72,6 @@ class CrimeDetailFragment : Fragment() {
                     oldCrime.copy(title = text.toString())
                 }
             }
-
-//            crimeDate.setText(crime.title)
-//            crimeDate.setOnClickListener{ view : View ->
-//                crimeDate.setText(crime.isSolved.toString())
-//            }
-//            crimeDate.apply{
-//                isEnabled = false
-//            }
 
             crimeSuspect.setOnClickListener {
                 selectSuspect.launch(null)
@@ -131,7 +121,7 @@ class CrimeDetailFragment : Fragment() {
                         getString(R.string.crime_report_subject)
                     )
                 }
-                // startActivity(reportIntent)
+
                 val chooserIntent = Intent.createChooser(
                     reportIntent,
                     getString(R.string.crime_report)
@@ -141,6 +131,11 @@ class CrimeDetailFragment : Fragment() {
 
             crimeSuspect.text = crime.suspect.ifEmpty {
                 getString(R.string.crime_suspect_text)
+            }
+
+            deleteCrime.setOnClickListener {
+                crimeDetailViewModel.deleteCrime(crime)
+                findNavController().navigateUp()
             }
 
         }

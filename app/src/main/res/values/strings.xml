@@ -19,4 +19,6 @@
     <string name="crime_report_suspect">the suspect is %s.</string>
 
     <string name="crime_report_subject">CriminalIntent Crime Report</string>
+
+    <string name="delete_crime">Delete Crime</string>
 </resources>
